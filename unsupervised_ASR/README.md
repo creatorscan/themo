@@ -1,37 +1,10 @@
-## Welcome to GitHub Pages
+## Grapheme to Phoneme Converter
 
-You can use the [editor on GitHub](https://github.com/creatorscan/themo/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+This repo contains simple G2P converter in **Mirkos_G2P**. This code is based on the work published in [Bayesian G2P](http://www.fit.vutbr.cz/research/groups/speech/publi/2017/hannemann_icassp2017_0002836.pdf)
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/creatorscan/themo/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+## Running example code
+1. `data_eko` contains sample files of letter and phoneme generated using the `mk_lexicon_far_eko_g2p.sh`
+2. `mk_lexicon_far_eko_g2p.sh` generates sample inputs in a desired format by feeding on input training dictionary
+3. `training_g2p` allows training a mapping between input graphemes and phonemes
+4. `testing_g2p` validates the training G2P model using sample test letters
+5. Executing `bash test.sh` traverses from steps 2 to 4 to provide desired phoneme sequences for test graphemes.
