@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # specify your main directory here
-main=/mnt/matylda6/baskar/experiments/G2P/g2p_mirko/g2p_code
-data=$main/data_eko
+main=Mirkos_G2P
+data=$main/data
 
-bash -xe $main/mk_lexicon_far_eko_g2p.sh
+bash -xe $main/mk_lexicon_far_g2p.sh
 
 ### fetch eos_id  # bad hack
 eos_id=$(grep "</s>;</s>" $data/train_grphs.sym | awk '{print $2}')
