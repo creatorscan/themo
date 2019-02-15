@@ -1,9 +1,26 @@
+# specify your main directory here
 main=/mnt/matylda6/baskar/experiments/G2P/g2p_mirko/g2p_code
+data=$main/data_eko
 
-./testing_g2p data_pashto/tobe_decoded.letters.far data_pashto/tobe_decoded.letters.far data_pashto/train_p2g.fst data_pashto/train_g2l.fst data_pashto/train_eps_limiter.fst data_pashto/letter_edit.fst data_pashto/phone_edit.fst data_pashto/hpylm.iteration1p2g.fst &> $main/data_pashto/tobe_decoded.letters.prons.decoded
+bash -xe $main/mk_lexicon_far_eko_g2p.sh
 
-grep "(" $main/data_pashto/tobe_decoded.letters.prons.decoded | grep -v "^$"  | cut -f 1 -d "(" | utils/int2sym.pl -f 1 > $main/data_pashto/tobe_decoded.letters.prons.decoded.sym
+### fetch eos_id  # bad hack
+eos_id=$(grep "</s>;</s>" $data/train_grphs.sym | awk '{print $2}')
 
-awk '{print $1}' /mnt/matylda6/baskar/experiments/kaldi/Babel/exp_y4/l2p/lang_prepare/LANGUAGES/bp104-Pashto-Base.v0_NWUdct/data/local/dict/tmp/gen_dic > $main/data_pashto/tobedec.words
+### training ###
+./training_g2p $data/train_prons.far $data/train_letters.far $data/train_p2g.fst \
+    $data/train_g2l.fst $data/train_eps_limiter.fst $eos_id ${data}_out
 
-paste $main/data_pashto/tobedec.words $main/data_pashto/tobe_decoded.letters.prons.decoded.sym > $main/data_pashto/tobe_decode.final.dic
+### testing ###
+./testing_g2p $data/test_letters.far $data/test_letters.far $data/train_p2g.fst \
+    $data/train_g2l.fst $data/train_eps_limiter.fst $data/letter_edit.fst \
+    $data/phone_edit.fst ${data}_out/hpylm.iteration3.fst &> $data/test_prons_raw.decoded
+
+grep "sub " $data/test_prons_raw.decoded | cut -f 1 -d "("  | sed "s|^ \+||g" | \
+    utils/int2sym.pl -f 1- $data/train_prons.sym  > $data/test_prons.decoded 
+
+awk '{print $1}' $data/test_letters.txt > $data/tmp
+
+paste $data/tmp $data/test_prons.decoded > $data/test_final.dic
+
+rm $data/tmp

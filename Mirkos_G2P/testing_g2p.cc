@@ -167,15 +167,15 @@ int main(int argc, char *argv[]) {
       if (limit_epsilon) {
         VectorFst<MyArc> fst_g2out_lim;
         fst::Compose(fst_g2out, *fst_lim, &fst_g2out_lim);
-
         Compose(*fst_p2g, fst_g2out_lim, &fst_p2g_out);
       } else {
         Compose(*fst_p2g, fst_g2out, &fst_p2g_out);
       }
 
+      fst_p2g_out.Write("fst_p2g2outlg_lim.fst");
       VectorFst<MyArc> fst_p2G;
       PhiCompose(fst_p2g_out, *fst_g_hpylm, kPHI, &fst_p2G);
-
+      fst_p2G.Write("fst_p2G.fst");
       if (fst_p2G.NumStates() == 0) {
         std::cerr << "WARNING: Empty composition in line:" << ind << std::endl;
         continue;

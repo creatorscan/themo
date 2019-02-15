@@ -2,7 +2,6 @@
 #include <vector>
 #include <algorithm>
 #include <string>
-//#include <unordered_map>
 #include <unordered_set>
 #include <stdlib.h>
 //#include <time.h>
@@ -12,9 +11,8 @@
 #include <fst/extensions/far/far.h>
 #include <fst/vector-fst.h>
 #include "HPYLMFst.hpp"
+#include <sys/stat.h>
 
-//#include <boost/program_options.hpp>
-//namespace po = boost::program_options;
 
 using namespace fst;
 typedef LogArc MyArc;
@@ -69,8 +67,12 @@ int main(int argc, char *argv[] ) {
   const char *fst_g2l_name = argv[4]; //"data_aud/train_g2l.fst";
   const char *fst_e_lim_name = argv[5]; //"data_aud/train_limiter.fst";
   const char *EOS_value = argv[6];
+  const char *outdir = argv[7];
   int kEOS = atoi(EOS_value);
   int kSOS = kEOS;
+
+  //create output directory if doesnt exist
+  int dir_status = mkdir(outdir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
   vector<std::pair<const Fst<MyArc> *,const Fst<MyArc> *>> lexicon;
 
@@ -105,9 +107,7 @@ int main(int argc, char *argv[] ) {
     std::cerr << "Invalid multistate phone2graphone or graphone2grepheme transducer: " << fst_p2g_name << ", " << fst_g2l_name << std::endl;
     return -1;
   }
-  //int np = 0, nl = 0, ng = 0, ng2 = 0;
-  //int num_graphones = fst_p2g->NumArcs(fst_p2g->Start());
-  //Rewrite based on /export/b17/jtrmal/workshop/
+
 const int lm_order = 7;
 std::vector<int> start_context(lm_order - 1, kSOS);
 
@@ -139,10 +139,6 @@ std::vector<int> start_context(lm_order - 1, kSOS);
   // Vector of graphone labels
   vector<vector<int> *> sampled_labels(num_examples, NULL);
 
-  // Initial HPYLM FST
-  //HPYLMFst fst_hpylm(hpylm, word_list, start_context, kEOS, base_dist, std::vector<bool>());
-  //VectorFst<MyArc> hpylmfst_expanded(fst_hpylm);
-  //hpylmfst_expanded.Write("hpylm_initial.fst");
 
   //##########################################
   //############ Main loop ###################
@@ -161,14 +157,12 @@ std::vector<int> start_context(lm_order - 1, kSOS);
     for(int i = 0; i < num_examples; i++) {
       int ind = indices[i];
       bool heldout = false;
-      //std::unordered_set<int>::const_iterator it = heldout_set.find(ind);
       if (heldout_set.find(ind) != heldout_set.end()) heldout = true;
       if (!heldout) training_examples++;
 
       std::cerr << "eg:index > " << ind << std::endl;
       // Get phone and letter strings
       auto lex_entry = lexicon[ind];
-      //HPYLMFst fst_hpylm(hpylm, word_list, start_context, kEOS, base_dist, std::vector<bool>());
       HPYLMFst fst_hpylm(hpylm, word_list, start_context, kEOS, base_dist, std::vector<bool>());
       VectorFst<MyArc> hpylmfst_expanded_out(fst_hpylm);
       //hpylmfst_expanded_out.Write("hpylm_init.fst");
@@ -194,17 +188,6 @@ std::vector<int> start_context(lm_order - 1, kSOS);
       //fst::Compose(fst_in2out, fst_hpylm, &fst_out);
       VectorFst<MyArc> fst_out(fst_in2out_lm);
       //fst_out.Write("fst_out_" + std::to_string(ind) + ".fst");
-/*
-      ComposeFst<MyArc>                      fst_in2g     (*lex_entry.second, *fst_p2g);
-      fst::ProjectFst<MyArc>                 fst_in2g_proj(fst_in2g,          PROJECT_OUTPUT);
-      //ArcSortFst<MyArc,OLabelCompare<MyArc>> fst_in2g_sort(fst_in2g_proj,      OLabelCompare<MyArc>());
-      //ComposeFst<MyArc>                      fst_in2g_lim (fst_in2g_proj,     *fst_lim);
-      //ArcSortFst<MyArc,OLabelCompare<MyArc>> fst_in2g_lisr(fst_in2g_lim,      OLabelCompare<MyArc>()); 
-      ComposeFst<MyArc>           fst_in2g_lm = PhiCompose(fst_in2g_proj,     fst_hpylm, kPHI);
-      ComposeFst<MyArc>                      fst_in2l     (fst_in2g_lm,       *fst_g2l);
-      ComposeFst<MyArc>                      fst_in2out   (fst_in2l,          *lex_entry.first);
-      VectorFst<MyArc> fst_out(fst_in2out);
-*/
       fst::Connect(&fst_out);
 
       //fst_out.Write("fst_out_afterCOnn_" + std::to_string(ind) + ".fst");
@@ -313,7 +296,7 @@ std::vector<int> start_context(lm_order - 1, kSOS);
     std::cout << "Finish iteration " << iteration << " with " << training_examples << " examples; heldout: " << heldoutLL << " improvement: " << heldout_improvement << std::endl;
     HPYLMFst fst_hpylm2(hpylm, word_list, start_context, kEOS, base_dist, std::vector<bool>());
     VectorFst<MyArc> hpylmfst_expanded2(fst_hpylm2);
-    hpylmfst_expanded2.Write("data_bhargav/hpylm.iteration"+std::to_string(iteration)+".fst");
+    hpylmfst_expanded2.Write(std::string(outdir) + "/hpylm.iteration"+std::to_string(iteration)+".fst");
     iteration++;
     if (training_examples < 15000) {
       hpylm.ResampleHyperParameters();
@@ -398,6 +381,5 @@ std::vector<int> start_context(lm_order - 1, kSOS);
     << heldoutLL << " improvement: " << heldout_improvement << std::endl;
   HPYLMFst fst_hpylm2(hpylm, word_list, start_context, kEOS, base_dist, std::vector<bool>());
   VectorFst<MyArc> hpylmfst_expanded2(fst_hpylm2);
-  //hpylmfst_expanded2.Write("hpylm.iteration"+std::to_string(iteration)+".fst");
-  hpylmfst_expanded2.Write("data_bhargav/hpylm.final.fst");
+  hpylmfst_expanded2.Write(std::string(outdir) + "/hpylm2.iteration"+std::to_string(iteration)+".fst");
 }
