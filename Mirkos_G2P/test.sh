@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # specify your main directory here
 main=/mnt/matylda6/baskar/experiments/G2P/g2p_mirko/g2p_code
 data=$main/data_eko
